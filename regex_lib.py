@@ -5,8 +5,6 @@ import networkx as nx
 class Automaton():
 
     def __init__(self):
-        self.states = set()
-        self.transitions = dict()
         self.incoming = dict()
         self.outgoing = dict()
         self.state_count = 0
@@ -14,60 +12,65 @@ class Automaton():
     def add_transition(self, source_state, target_state, input_symb):
         source_state = self.create_state(source_state)
         target_state = self.create_state(target_state)
-        new_transition = (source_state, target_state)
-        self.transitions.setdefault(new_transition, set())
+        outdict = self.outgoing.setdefault(source_state, dict())
+        outdict = outdict.setdefault(target_state, set())
+        indict = self.incoming.setdefault(target_state, dict())
+        indict[source_state] = outdict
         if type(input_symb) == str:
-            self.transitions[new_transition].add(input_symb)
-        elif hasattr(input_symb, '__iter__'):
-            self.transitions[new_transition].update(input_symb)
-        self.outgoing.setdefault(source_state, set())
-        self.outgoing[source_state].add(target_state)
-        self.incoming.setdefault(target_state, set())
-        self.incoming[target_state].add(source_state)
+            outdict.add(input_symb)
+        elif type(input_symb) == set:
+            outdict.update(input_symb)
+        else:
+            raise TypeError('input_symb must be str or set')
 
     def remove_transition(
-        self, source_state, target_state, input_symb, remove_isolated=False
+        self, source_state, target_state, input_symb=None
     ):
-        transition = (source_state, target_state)
-        self.transitions[transition].remove(input_symb)
-        if not self.transitions[transition]:
-            del self.transitions[transition]
-        self.outgoing[source_state].remove(target_state)
-        self.incoming[target_state].remove(source_state)
+        if input_symb is None:
+            del self.outgoing[source_state][target_state]
+            del self.incoming[target_state][source_state]
+            return None
+        if type(input_symb) == set:
+            self.outgoing[source_state][target_state] -= input_symb
+        elif type(input_symb) == str:
+            self.outgoing[source_state][target_state].remove(input_symb)
+        else:
+            raise TypeError('input_symb must be str or set')
+        if not self.outgoing[source_state][target_state]:
+            del self.outgoing[source_state][target_state]
+            del self.incoming[target_state][source_state]
 
     def create_state(self, new_state=None):
         if new_state is None:
             new_state = self.state_count
-        if new_state not in self.states:
-            self.states.add(new_state)
-            self.incoming[new_state] = set()
-            self.outgoing[new_state] = set()
+        if new_state not in self.incoming:
+            self.incoming[new_state] = dict()
+            self.outgoing[new_state] = dict()
             if new_state >= self.state_count:
                 self.state_count = new_state + 1
         return new_state
 
     def remove_state(self, state):
-        if state not in self.states:
+        if state not in self.outgoing:
             return False
-        self.states.remove(state)
         for outstate in self.outgoing[state]:
-            transition = (state, outstate)
-            del self.transitions[transition]
-        for instate in self.incoming[state]:
-            transition = (instate, state)
-            del self.transitions[transition]
+            del self.incoming[outstate][state]
+        del self.outgoing[state]
         return True
 
     def list_states(self):
-        return self.states.copy()
+        return tuple(self.outgoing)
 
     def list_transitions(self):
-        return set((t[0], t[1], s)
-                   for t, tc in self.transitions.items()
-                   for s in tc)
+        transitions = dict()
+        for source_state, outdict in self.outgoing.items():
+            for target_state, input_symbols in outdict.items():
+                transitions[(source_state, target_state)] = \
+                    input_symbols.copy()
+        return transitions
 
     def list_terminal_states(self):
-        return set((s for s in self.states if not self.outgoing[s]))
+        return set((s for s, cset in self.outgoing.items() if not cset))
 
     def duplicate_automaton_part(
             self, start_state, clone_state=None, state_map=None
@@ -81,8 +84,7 @@ class Automaton():
                 new_state = state_map[outstate]
             else:
                 new_state = self.create_state()
-            transition = (start_state, outstate)
-            for inpsymb in self.transitions[transition]:
+            for inpsymb in self.outgoing[start_state][outstate]:
                 self.add_transition(clone_state, new_state, inpsymb)
             if outstate not in state_map:
                 _, new_terminal_states, _ = self.duplicate_automaton_part(
@@ -103,17 +105,10 @@ class Automaton():
         if (len(self.outgoing[state1]) > 0 or len(self.incoming[state2]) > 0):
             raise IndexError('one state must have only incoming links ' +
                              'and the other state only outgoing links')
-        for transition in tuple(self.transitions):
-            if state2 not in transition:
-                continue
-            new_source_state = transition[0]
-            new_target_state = transition[1]
-            if new_source_state == state2:
-                new_source_state = state1
-            if new_target_state == state2:
-                new_target_state = state1
-            inp_symbs = self.transitions[transition]
-            self.add_transition(new_source_state, new_target_state, inp_symbs)
+        for outstate in tuple(self.outgoing[state2]):
+            self.incoming[outstate][state1] = self.incoming[outstate][state2]
+            self.outgoing[state1][outstate] = self.incoming[outstate][state1]
+            del self.incoming[outstate][state2]
         self.remove_state(state2)
         return state1
 
@@ -203,12 +198,14 @@ class Automaton():
 
 
 auto = Automaton()
-
 auto.add_transition(0, 3, 'a')
 auto.add_transition(1, 3, 'b')
 # auto.add_transition(3, 0, 'x')
 auto.add_transition(0, 1, 'c')
 auto.add_transition(0, 2, 'y')
+
+auto.remove_transition(0, 3, 'a')
+auto.remove_state(0)
 auto.list_transitions()
 
 auto.duplicate_automaton_part(0)
@@ -221,26 +218,6 @@ auto.to_dfa()
 '(abc|(12)+3)'
 
 
-special_rex = 'abcdef'
-general_rex = 'abc(def|123)'
-
-rex = 'a+b'
-'aaaab', 'ab'
-rex = 'a?b'
-'b', 'ab'
-rex = 'a*b'
-'b', 'ab', 'aaaaab'
-rex = 'abc(def|123)*xyz'
-'abcxyz', 'abcdefxyz', 'abc123xyz', 'abcdef123123defdefxyz'
-rex = 'the (the ?)+'
-'the the', 'the the ', 'the thethe', 'the the thethethe the '
-
-
-
-
-
-is_contained(special_rex, general_rex)
-
 
 
 
@@ -248,7 +225,7 @@ is_contained(special_rex, general_rex)
 
 auto = Automaton()
 auto.rex_to_nfa('(abc|(12)+3)')
-edges = tuple(auto.transitions.keys())
+edges = list(auto.list_transitions()
 G = nx.DiGraph()
 G.add_edges_from(edges)
 pos = nx.spring_layout(G)
@@ -260,7 +237,7 @@ nx.draw(
 )
 nx.draw_networkx_edge_labels(
     G, pos,
-    edge_labels=auto.transitions,
+    edge_labels=auto.list_transitions(),
     font_color='red',
 )
 plt.axis('off')
