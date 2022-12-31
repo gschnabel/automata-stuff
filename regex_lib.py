@@ -7,7 +7,6 @@ class Automaton():
     def __init__(self):
         self.states = set()
         self.transitions = dict()
-        self.isolated = set()
         self.incoming = dict()
         self.outgoing = dict()
         self.state_count = 0
@@ -25,10 +24,6 @@ class Automaton():
         self.outgoing[source_state].add(target_state)
         self.incoming.setdefault(target_state, set())
         self.incoming[target_state].add(source_state)
-        if source_state in self.isolated:
-            self.isolated.remove(source_state)
-        if target_state in self.isolated:
-            self.isolated.remove(target_state)
 
     def remove_transition(
         self, source_state, target_state, input_symb, remove_isolated=False
@@ -39,27 +34,12 @@ class Automaton():
             del self.transitions[transition]
         self.outgoing[source_state].remove(target_state)
         self.incoming[target_state].remove(source_state)
-        if not self.incoming[source_state] and not self.outgoing[source_state]:
-            if remove_isolated:
-                self.remove_state(source_state)
-            else:
-                self.isolated.add(source_state)
-        if not self.incoming[target_state] and not self.outgoing[target_state]:
-            if remove_isolated:
-                self.remove_state(target_state)
-            else:
-                self.isolated.add(target_state)
-
-    def remove_isolated_states(self):
-        for curstate in self.isolated:
-            self.remove_state(curstate)
 
     def create_state(self, new_state=None):
         if new_state is None:
             new_state = self.state_count
         if new_state not in self.states:
             self.states.add(new_state)
-            self.isolated.add(new_state)
             self.incoming[new_state] = set()
             self.outgoing[new_state] = set()
             if new_state >= self.state_count:
@@ -70,8 +50,6 @@ class Automaton():
         if state not in self.states:
             return False
         self.states.remove(state)
-        if state in self.isolated:
-            self.isolated.remove(state)
         for outstate in self.outgoing[state]:
             transition = (state, outstate)
             del self.transitions[transition]
