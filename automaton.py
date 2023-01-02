@@ -104,6 +104,8 @@ class Automaton():
     def _determine_reachable_states(self, start_state=None, reachable=None):
         if start_state is None:
             start_state = self.get_initial_state()
+            if start_state is None:
+                raise IndexError('no initial state defined')
         if reachable is None:
             reachable = set()
         elif start_state in reachable:
