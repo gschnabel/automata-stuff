@@ -8,6 +8,8 @@ class Automaton():
     def __init__(self):
         self.incoming = dict()
         self.outgoing = dict()
+        self.terminal_states = set()
+        self.initial_state = None
         self.state_count = 0
 
     def add_transition(self, source_state, target_state, input_symb):
@@ -62,7 +64,7 @@ class Automaton():
         return True
 
     def list_states(self):
-        return tuple(self.outgoing)
+        return set(self.outgoing)
 
     def list_transitions(
         self, source_states=None, target_states=None, symbols=None,
@@ -92,3 +94,53 @@ class Automaton():
                         curtrans = (source_state, target_state, sym)
                         transitions.add(curtrans)
         return transitions
+
+    def has_no_incoming_transitions(self, state):
+        return len(self.incoming[state]) == 0
+
+    def has_no_outgoing_transitions(self, state):
+        return len(self.outgoing[state]) == 0
+
+    def _determine_reachable_states(self, start_state=None, reachable=None):
+        if start_state is None:
+            start_state = self.get_initial_state()
+        if reachable is None:
+            reachable = set()
+        elif start_state in reachable:
+            return reachable
+        reachable.add(start_state)
+        transitions = self.list_transitions(
+            source_states=(start_state,), symbols_in_dict=True
+        )
+        for source_state, target_state in transitions:
+            self._determine_reachable_states(target_state, reachable)
+        return reachable
+
+    def determine_reachable_states(self, start_state=None):
+        return self._determine_reachable_states(start_state)
+
+    def determine_unreachable_states(self, start_state=None):
+        reachable = self._determine_reachable_states(start_state)
+        all_states = self.list_states()
+        return all_states.difference(reachable)
+
+    def set_terminal_states(self, states):
+        if type(states) != set:
+            raise TypeError('expecting a `set` of terminal states')
+        existing_states = self.outgoing.keys()
+        missing_states = [s for s in states if s not in existing_states]
+        if len(missing_states) > 0:
+            raise IndexError(f'these states do not exist: {missing_states}')
+        self.terminal_states = states.copy()
+
+    def add_terminal_state(self, state):
+        self.terminal_states.add(state)
+
+    def get_terminal_states(self):
+        return self.terminal_states.copy()
+
+    def set_initial_state(self, state):
+        self.initial_state = state
+
+    def get_initial_state(self):
+        return self.initial_state
