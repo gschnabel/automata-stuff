@@ -18,13 +18,6 @@ auto.list_transitions()
 
 duplicate_automaton_part(auto, 0)
 auto.list_transitions()
-auto.merge_states(3, 4)
-
-auto.to_dfa()
-
-'abc(uvw|123)'
-'(abc|(12)+3)'
-
 
 auto = Automaton()
 rex_to_nfa(auto, '(abc|(12)+3)')

@@ -1,4 +1,5 @@
 from automaton import Automaton
+from regex_utils import locate_union_symb
 
 
 def duplicate_automaton_part(
@@ -25,20 +26,6 @@ def duplicate_automaton_part(
     else:
         terminal_states = set((x for y in terminal_states for x in y))
     return clone_state, terminal_states, state_map
-
-
-def locate_union_symb(rex, pos=0):
-    bracket_counter = 0
-    while pos < len(rex) and bracket_counter >= 0:
-        cursymb = rex[pos]
-        if cursymb == '(':
-            bracket_counter += 1
-        elif cursymb == ')':
-            bracket_counter -= 1
-        elif cursymb == '|' and bracket_counter == 0:
-            return pos
-        pos += 1
-    return None
 
 
 def rex_to_nfa(automaton, rex, pos=0, start_state=None):
