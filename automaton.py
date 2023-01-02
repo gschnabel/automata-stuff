@@ -65,13 +65,14 @@ class Automaton():
         return tuple(self.outgoing)
 
     def list_transitions(
-        self, source_states=None, target_states=None, symbols=None
+        self, source_states=None, target_states=None, symbols=None,
+        symbols_in_dict=False
     ):
         if source_states is None:
             source_states = set(self.outgoing.keys())
         if target_states is None:
             target_states = set(self.outgoing.keys())
-        transitions = set()
+        transitions = dict() if symbols_in_dict else set()
         for source_state in source_states:
             outdict = self.outgoing[source_state]
             for target_state, input_symbols in outdict.items():
@@ -81,7 +82,13 @@ class Automaton():
                     allowed_symbols = input_symbols
                 else:
                     allowed_symbols = input_symbols.intersection(symbols)
-                for sym in allowed_symbols:
-                    curtrans = (source_state, target_state, sym)
-                    transitions.add(curtrans)
+                    if len(allowed_symbols) == 0:
+                        continue
+                if symbols_in_dict:
+                    curtrans = (source_state, target_state)
+                    transitions[curtrans] = allowed_symbols
+                else:
+                    for sym in allowed_symbols:
+                        curtrans = (source_state, target_state, sym)
+                        transitions.add(curtrans)
         return transitions

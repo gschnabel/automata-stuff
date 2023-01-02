@@ -2,6 +2,7 @@ import re
 import matplotlib.pyplot as plt
 import networkx as nx
 from automaton import Automaton
+from automaton_algos import rex_to_nfa, duplicate_automaton_part
 
 
 auto = Automaton()
@@ -15,7 +16,7 @@ auto.remove_transition(0, 3, 'a')
 auto.remove_state(0)
 auto.list_transitions()
 
-auto.duplicate_automaton_part(0)
+duplicate_automaton_part(auto, 0)
 auto.list_transitions()
 auto.merge_states(3, 4)
 
@@ -26,9 +27,8 @@ auto.to_dfa()
 
 
 auto = Automaton()
-auto.rex_to_nfa('(abc|(12)+3)')
-auto.remove_eps_transitions()
-edges = list(auto.list_transitions())
+rex_to_nfa(auto, '(abc|(12)+3)')
+edges = list(auto.list_transitions(symbols_in_dict=True))
 G = nx.DiGraph()
 G.add_edges_from(edges)
 pos = nx.spring_layout(G)
@@ -40,7 +40,7 @@ nx.draw(
 )
 nx.draw_networkx_edge_labels(
     G, pos,
-    edge_labels=auto.list_transitions(),
+    edge_labels=auto.list_transitions(symbols_in_dict=True),
     font_color='red',
 )
 plt.axis('off')
