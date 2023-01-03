@@ -22,7 +22,7 @@ auto.list_transitions()
 
 # basic checking of NFA-delta to DFA
 auto = Automaton()
-create_NFA_from_rex(auto, '(aaa|a+)')
+create_NFA_from_rex(auto, '(aaa|(ab|a+))')
 clone_auto = convert_NFA_to_NFA_without_eps(auto)
 clone_auto = convert_NFA_without_eps_to_DFA(clone_auto)
 clone_auto = convert_DFA_to_minimal_DFA(clone_auto)

@@ -181,42 +181,58 @@ def convert_NFA_without_eps_to_DFA(original_automaton):
 
 def convert_DFA_to_minimal_DFA(original_automaton):
     auto = original_automaton
-    new_auto = auto.copy()
-    all_states = new_auto.list_states()
-    partitions = {i: set((s,)) for i, s in enumerate(all_states)}
+    all_states = auto.list_states()
+    terminal_states = auto.get_terminal_states()
+    nonterminal_states = all_states.difference(terminal_states)
+    # determine partitions corresponding to states of minimal DFA
+    partitions = list((terminal_states, nonterminal_states))
+    state_partition_map = dict()
+    state_partition_map.update({s: 0 for s in terminal_states})
+    state_partition_map.update({s: 1 for s in nonterminal_states})
+    is_terminal_partition = [True, False]
     partitions_changed = True
     while partitions_changed:
         partitions_changed = False
-        treated_partitions = dict()
-        while len(partitions) > 0:
-            partition_index, curpartition = partitions.popitem()
-            treated_partitions[partition_index] = curpartition
-            curstate = curpartition.pop()
-            curpartition.add(curstate)
-            curts = new_auto.list_transitions(source_states=(curstate,))
-            curts = {(t[1], t[2]) for t in curts}
-            is_cur_terminal = new_auto.is_terminal_state(curstate)
-            for test_index, testpartition in tuple(partitions.items()):
-                teststate = testpartition.pop()
-                testpartition.add(teststate)
-                testts = new_auto.list_transitions(source_states=(teststate,))
-                testts = {(t[1], t[2]) for t in testts}
-                is_test_terminal = new_auto.is_terminal_state(teststate)
-                if (curts == testts and is_cur_terminal == is_test_terminal):
-                    curpartition.update(testpartition)
-                    del partitions[test_index]
-                    partitions_changed = True
-        # now we are merging equivalent states together
-        # and adjust the transitions of other states to point to the new ones
-        for idx, p in treated_partitions.items():
-            if len(p) == 1:
-                partitions[idx] = p
-                continue
-            curts = new_auto.list_transitions(target_states=p)
-            new_state = new_auto.create_state()
-            for curstate in p:
-                new_auto.remove_state(curstate)
-            for source_state, target_state, sym in curts:
-                new_auto.add_transition(source_state, new_state, sym)
-            partitions[idx] = set((new_state,))
+        for i, curpartition in enumerate(tuple(partitions)):
+            untreated = curpartition.copy()
+            new_partition = curpartition
+            is_curpart_terminal = is_terminal_partition[i]
+            while True:
+                curstate = untreated.pop()
+                curts = auto.list_transitions(source_states=(curstate,))
+                curts = set((t[2], state_partition_map[t[1]]) for t in curts)
+                disting = set()
+                while len(untreated) > 0:
+                    teststate = untreated.pop()
+                    testts = auto.list_transitions(source_states=(teststate,))
+                    testts = set((t[2], state_partition_map[t[1]]) for t in testts)
+                    if curts != testts:
+                        disting.add(teststate)
+                if len(disting) == 0:
+                    break
+                partitions_changed = True
+                new_partition.difference_update(disting)
+                new_partition = disting
+                partitions.append(new_partition)
+                is_terminal_partition.append(is_curpart_terminal)
+                untreated = new_partition.copy()
+        # update the state_partition_map
+        for i, p in enumerate(partitions):
+            for s in p:
+                state_partition_map[s] = i
+    # construct the minimal DFA
+    new_auto = Automaton()
+    for i in range(len(partitions)):
+        new_auto.create_state(i)
+        if is_terminal_partition[i]:
+            new_auto.add_terminal_state(i)
+    for i, p in enumerate(partitions):
+        orig_source_state = p.pop()
+        p.add(orig_source_state)
+        trans = auto.list_transitions(source_states=(orig_source_state,))
+        trans = set((i, state_partition_map[t[1]], t[2]) for t in trans)
+        for t in trans:
+            new_auto.add_transition(t[0], t[1], t[2])
+    orig_initial_state = auto.get_initial_state()
+    new_auto.set_initial_state(state_partition_map[orig_initial_state])
     return new_auto
