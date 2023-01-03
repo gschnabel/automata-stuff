@@ -1,6 +1,4 @@
-import re
-import matplotlib.pyplot as plt
-import networkx as nx
+import copy
 
 
 class Automaton():
@@ -11,6 +9,9 @@ class Automaton():
         self.terminal_states = set()
         self.initial_state = None
         self.state_count = 0
+
+    def copy(self):
+        return copy.deepcopy(self)
 
     def add_transition(self, source_state, target_state, input_symb):
         if type(input_symb) == set and len(input_symb) == 0:
@@ -61,7 +62,18 @@ class Automaton():
         for outstate in self.outgoing[state]:
             del self.incoming[outstate][state]
         del self.outgoing[state]
+        if self.is_initial_state(state):
+            self.initial_state = None
+        if self.is_terminal_state(state):
+            self.terminal_states.remove(state)
         return True
+
+    def list_symbols(self):
+        all_transitions = self.list_transitions()
+        all_symbols = set()
+        for t in all_transitions:
+            all_symbols.add(t[2])
+        return all_symbols
 
     def list_states(self):
         return set(self.outgoing)
@@ -141,8 +153,14 @@ class Automaton():
     def get_terminal_states(self):
         return self.terminal_states.copy()
 
+    def is_terminal_state(self, state):
+        return state in self.terminal_states
+
     def set_initial_state(self, state):
         self.initial_state = state
 
     def get_initial_state(self):
         return self.initial_state
+
+    def is_initial_state(self, state):
+        return state == self.initial_state

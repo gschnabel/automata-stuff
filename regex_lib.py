@@ -3,31 +3,37 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from automaton import Automaton
 from automaton_algos import (
-    rex_to_nfa,
+    create_NFA_from_rex,
     duplicate_automaton_part,
-    clone_automaton_without_eps_transitions,
+    convert_NFA_to_NFA_without_eps,
+    convert_NFA_without_eps_to_DFA,
+    convert_DFA_to_minimal_DFA
 )
 
-
-
-
+# basic checks of automaton
 auto = Automaton()
 auto.add_transition(0, 3, 'a')
 auto.add_transition(1, 3, 'b')
 # auto.add_transition(3, 0, 'x')
 auto.add_transition(0, 1, 'c')
 auto.add_transition(0, 2, 'y')
-
-auto.remove_transition(0, 3, 'a')
-auto.remove_state(0)
-auto.list_transitions()
-
 duplicate_automaton_part(auto, 0)
 auto.list_transitions()
 
+# basic checking of NFA-delta to DFA
 auto = Automaton()
-rex_to_nfa(auto, '(abc|(12)+3)')
-clone_auto = clone_automaton_without_eps_transitions(auto)
+create_NFA_from_rex(auto, '(aaa|a+)')
+clone_auto = convert_NFA_to_NFA_without_eps(auto)
+clone_auto = convert_NFA_without_eps_to_DFA(clone_auto)
+clone_auto = convert_DFA_to_minimal_DFA(clone_auto)
+clone_auto = convert_DFA_to_minimal_DFA(clone_auto)
+
+
+# basic checking of converting regular expression to NFA
+auto = Automaton()
+create_NFA_from_rex(auto, '(abc|(12)+3)')
+clone_auto = convert_NFA_to_NFA_without_eps(auto)
+
 
 plot_auto = clone_auto
 
@@ -48,7 +54,6 @@ nx.draw_networkx_edge_labels(
 )
 plt.axis('off')
 plt.show()
-
 
 clone_auto.list_transitions(source_states=((12,13,)))
 
