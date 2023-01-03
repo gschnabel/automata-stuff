@@ -190,8 +190,7 @@ def convert_DFA_to_minimal_DFA(original_automaton):
     state_partition_map.update({s: 0 for s in terminal_states})
     state_partition_map.update({s: 1 for s in nonterminal_states})
     is_terminal_partition = [True, False]
-    partitions_changed = True
-    while partitions_changed:
+    while True:
         partitions_changed = False
         for i, curpartition in enumerate(tuple(partitions)):
             untreated = curpartition.copy()
@@ -220,6 +219,8 @@ def convert_DFA_to_minimal_DFA(original_automaton):
         for i, p in enumerate(partitions):
             for s in p:
                 state_partition_map[s] = i
+        if not partitions_changed:
+            break
     # construct the minimal DFA
     new_auto = Automaton()
     for i in range(len(partitions)):
