@@ -148,6 +148,8 @@ class Automaton():
         self.terminal_states = states.copy()
 
     def add_terminal_state(self, state):
+        if state not in self.outgoing:
+            raise IndexError('the state {state} does not exist')
         self.terminal_states.add(state)
 
     def get_terminal_states(self):
@@ -157,6 +159,8 @@ class Automaton():
         return state in self.terminal_states
 
     def set_initial_state(self, state):
+        if state not in self.outgoing:
+            raise IndexError(f'the state {state} does not exist')
         self.initial_state = state
 
     def get_initial_state(self):
