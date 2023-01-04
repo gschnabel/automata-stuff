@@ -1,5 +1,6 @@
-from automaton import Automaton
-from regex_utils import locate_union_symb
+from .automaton import Automaton
+from .DFA import DFA
+from .regex_utils import locate_union_symb
 
 
 def _duplicate_automaton_part(
@@ -184,12 +185,15 @@ def convert_NFA_without_eps_to_DFA(original_automaton):
                     new_auto.add_terminal_state(new_state)
                 state_sets[new_state] = new_state_set
                 new_auto.add_transition(curstate, new_state, sym)
-    # remove unreachable states
-    return new_auto
+    return DFA(new_auto)
 
 
 def convert_DFA_to_minimal_DFA(original_automaton):
     auto = original_automaton
+    if not isinstance(auto, DFA):
+        raise TypeError(
+            'a DFA (deterministic finite automaton) is expected as input'
+        )
     all_states = auto.list_states()
     terminal_states = auto.get_terminal_states()
     nonterminal_states = all_states.difference(terminal_states)
@@ -245,4 +249,4 @@ def convert_DFA_to_minimal_DFA(original_automaton):
             new_auto.add_transition(t[0], t[1], t[2])
     orig_initial_state = auto.get_initial_state()
     new_auto.set_initial_state(state_partition_map[orig_initial_state])
-    return new_auto
+    return DFA(new_auto)

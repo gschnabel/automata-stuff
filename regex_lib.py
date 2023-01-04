@@ -1,8 +1,8 @@
 import re
 import matplotlib.pyplot as plt
 import networkx as nx
-from automaton import Automaton
-from automaton_algos import (
+from automaton_stuff import Automaton
+from automaton_stuff.algos import (
     create_NFA_from_rex,
     convert_NFA_to_NFA_without_eps,
     convert_NFA_without_eps_to_DFA,
@@ -20,10 +20,9 @@ auto.add_transition(0, 2, 'y')
 auto.list_transitions()
 
 # basic checking of NFA-delta to DFA
-auto = create_NFA_from_rex('(a+b|(ab|a+))+')
+auto = create_NFA_from_rex(r'(a\+b|ab|a+)+')
 clone_auto = convert_NFA_to_NFA_without_eps(auto)
 clone_auto = convert_NFA_without_eps_to_DFA(clone_auto)
-clone_auto = convert_DFA_to_minimal_DFA(clone_auto)
 clone_auto = convert_DFA_to_minimal_DFA(clone_auto)
 
 
@@ -37,11 +36,13 @@ nx.draw(
     G, pos, edge_color='black', width=1, linewidths=1,
     node_size=500, node_color='pink', alpha=0.9,
     labels={node: node for node in G.nodes()},
+    connectionstyle="arc3,rad=0.1"
 )
 nx.draw_networkx_edge_labels(
     G, pos,
     edge_labels=plot_auto.list_transitions(symbols_in_dict=True),
     font_color='red',
+    label_pos=0.4
 )
 plt.axis('off')
 plt.show()
