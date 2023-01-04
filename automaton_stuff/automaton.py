@@ -1,10 +1,13 @@
 import copy
+import string
 
 
 class Automaton():
 
     def __init__(self, auto=None):
         self.incoming = dict()
+        self.alphabet = set(string.printable)
+        self.alphabet.add('eps')
         self.outgoing = dict()
         self.terminal_states = set()
         self.initial_state = None
@@ -27,6 +30,12 @@ class Automaton():
     def add_transition(self, source_state, target_state, input_symb):
         if type(input_symb) == set and len(input_symb) == 0:
             return
+        if type(input_symb) == str and input_symb not in self.alphabet:
+            raise ValueError(f'input symbol {input_symb} not in alphabet')
+        elif type(input_symb) == set and input_symb.difference(self.alphabet):
+            raise ValueError(
+                f'some of the input symbols {input_symb} not in alphabet'
+            )
         source_state = self.create_state(source_state)
         target_state = self.create_state(target_state)
         outdict = self.outgoing.setdefault(source_state, dict())
@@ -79,12 +88,21 @@ class Automaton():
             self.terminal_states.remove(state)
         return True
 
-    def list_symbols(self):
-        all_transitions = self.list_transitions()
-        all_symbols = set()
-        for t in all_transitions:
-            all_symbols.add(t[2])
-        return all_symbols
+    def set_symbols(self, symbols):
+        self.alphabet = set(symbols)
+
+    def add_symbol(self, symbol):
+        self.alphabet.add(symbol)
+
+    def list_symbols(self, only_used=False):
+        if not only_used:
+            return self.alphabet.copy()
+        else:
+            all_transitions = self.list_transitions()
+            used_symbols = set()
+            for t in all_transitions:
+                used_symbols.add(t[2])
+            return used_symbols
 
     def list_states(self):
         return set(self.outgoing)
@@ -187,7 +205,7 @@ class Automaton():
         return len(self.terminal_states) > 0
 
     def contains_eps_transitions(self):
-        symbols = self.list_symbols()
+        symbols = self.list_symbols(only_used=True)
         return 'eps' in symbols
 
     def is_DFA(self):
