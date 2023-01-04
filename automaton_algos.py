@@ -2,7 +2,7 @@ from automaton import Automaton
 from regex_utils import locate_union_symb
 
 
-def duplicate_automaton_part(
+def _duplicate_automaton_part(
         automaton, start_state, clone_state=None, state_map=None
 ):
     state_map = state_map if state_map is not None else dict()
@@ -17,7 +17,7 @@ def duplicate_automaton_part(
             new_state = automaton.create_state()
         automaton.add_transition(clone_state, new_state, inpsym)
         if outstate not in state_map:
-            _, new_terminal_states, _ = duplicate_automaton_part(
+            _, new_terminal_states, _ = _duplicate_automaton_part(
                 automaton, outstate, new_state, state_map
             )
             terminal_states.append(new_terminal_states)
@@ -28,7 +28,7 @@ def duplicate_automaton_part(
     return clone_state, terminal_states, state_map
 
 
-def create_NFA_from_rex(automaton, rex, pos=0, cur_state=None):
+def _create_NFA_from_rex(automaton, rex, pos=0, cur_state=None):
     is_most_outer_call = cur_state is None
     cur_state = automaton.create_state(cur_state)
     if is_most_outer_call:
@@ -41,10 +41,10 @@ def create_NFA_from_rex(automaton, rex, pos=0, cur_state=None):
             right_temp_state = automaton.create_state()
             automaton.add_transition(cur_state, left_temp_state, 'eps')
             automaton.add_transition(cur_state, right_temp_state, 'eps')
-            left_pos, left_terminal_state = create_NFA_from_rex(
+            left_pos, left_terminal_state = _create_NFA_from_rex(
                 automaton, rex[:union_pos], pos, left_temp_state
             )
-            right_pos, right_terminal_state = create_NFA_from_rex(
+            right_pos, right_terminal_state = _create_NFA_from_rex(
                 automaton, rex, union_pos+1, right_temp_state
             )
             terminal_state = automaton.create_state()
@@ -57,7 +57,7 @@ def create_NFA_from_rex(automaton, rex, pos=0, cur_state=None):
         elif cursymb == '(':
             temp_state = automaton.create_state()
             automaton.add_transition(cur_state, temp_state, 'eps')
-            pos, terminal_state = create_NFA_from_rex(
+            pos, terminal_state = _create_NFA_from_rex(
                 automaton, rex, pos+1, temp_state
             )
             if len(rex) == pos or rex[pos] != ')':
@@ -71,7 +71,7 @@ def create_NFA_from_rex(automaton, rex, pos=0, cur_state=None):
         # perform an automaton duplication for `+`
         if rex_symb == '+':
             clone_state, new_terminal_states, _ = \
-                duplicate_automaton_part(automaton, cur_state)
+                _duplicate_automaton_part(automaton, cur_state)
             automaton.add_transition(terminal_state, clone_state, 'eps')
             cur_state = clone_state
             if len(new_terminal_states) != 1:
@@ -90,7 +90,13 @@ def create_NFA_from_rex(automaton, rex, pos=0, cur_state=None):
     return pos, cur_state
 
 
-def determine_transitions(auto, state, visited=None):
+def create_NFA_from_rex(rex):
+    auto = Automaton()
+    _create_NFA_from_rex(auto, rex)
+    return auto
+
+
+def _determine_transitions(auto, state, visited=None):
     if visited is None:
         visited = set()
     elif state in visited:
@@ -103,7 +109,7 @@ def determine_transitions(auto, state, visited=None):
     for transition in eps_transitions:
         outstate = transition[1]
         inherited_transitions, inherited_terminal_state_flag = \
-            determine_transitions(auto, outstate, visited)
+            _determine_transitions(auto, outstate, visited)
         new_transitions.update(inherited_transitions)
         if inherited_terminal_state_flag:
             terminal_state_flag = True
@@ -125,7 +131,7 @@ def convert_NFA_to_NFA_without_eps(original_automaton):
     clone_auto.set_initial_state(new_initial_state)
     # add transitions
     for state in states:
-        curtransitions, is_terminal_state = determine_transitions(auto, state)
+        curtransitions, is_terminal_state = _determine_transitions(auto, state)
         new_source_state = state_map[state]
         if is_terminal_state:
             clone_auto.add_terminal_state(new_source_state)
