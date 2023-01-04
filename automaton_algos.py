@@ -141,42 +141,42 @@ def convert_NFA_to_NFA_without_eps(original_automaton):
 
 def convert_NFA_without_eps_to_DFA(original_automaton):
     auto = original_automaton
-    clone_auto = auto.copy()
-    untreated_states = clone_auto.list_states()
+    new_auto = Automaton()
+    initial_state = auto.get_initial_state()
+    new_initial_state = new_auto.create_state()
+    new_auto.set_initial_state(new_initial_state)
+    state_sets = dict()
+    state_sets[new_initial_state] = set((initial_state,))
+    visited = dict()
+    untreated_states = set((new_initial_state,))
     while len(untreated_states) > 0:
-        s = untreated_states.pop()
-        transitions = clone_auto.list_transitions(source_states=(s,))
+        curstate = untreated_states.pop()
+        orig_source_states = state_sets[curstate]
+        visited[tuple(sorted(orig_source_states))] = curstate
+        transitions = auto.list_transitions(source_states=orig_source_states)
         sym_dict = dict()
         for t in transitions:
             cursym = t[2]
             curtransitions = sym_dict.setdefault(cursym, set())
             curtransitions.add(t)
         for sym, ts in sym_dict.items():
-            if len(ts) == 1:
-                continue
-            new_state = clone_auto.create_state()
-            untreated_states.add(new_state)
-            is_terminal_state = any(
-                (auto.is_terminal_state(tt[1]) for tt in ts)
-            )
-            if is_terminal_state:
-                clone_auto.add_terminal_state(new_state)
-            clone_auto.add_transition(s, new_state, sym)
-            orig_target_states = {t[1] for t in ts}
-            new_transitions = auto.list_transitions(
-                source_states=orig_target_states
-            )
-            for _, new_target_state, new_sym in new_transitions:
-                clone_auto.add_transition(
-                    new_state, new_target_state, new_sym
+            new_state_set = set(t[1] for t in ts)
+            new_state_tuple = tuple(sorted(new_state_set))
+            if new_state_tuple in visited:
+                target_state = visited[new_state_tuple]
+                new_auto.add_transition(curstate, target_state, sym)
+            else:
+                new_state = new_auto.create_state()
+                untreated_states.add(new_state)
+                is_terminal_state = any(
+                    (auto.is_terminal_state(tt[1]) for tt in ts)
                 )
-            for t in ts:
-                clone_auto.remove_transition(t[0], t[1], t[2])
+                if is_terminal_state:
+                    new_auto.add_terminal_state(new_state)
+                state_sets[new_state] = new_state_set
+                new_auto.add_transition(curstate, new_state, sym)
     # remove unreachable states
-    unreachable = clone_auto.determine_unreachable_states()
-    for s in unreachable:
-        clone_auto.remove_state(s)
-    return clone_auto
+    return new_auto
 
 
 def convert_DFA_to_minimal_DFA(original_automaton):
