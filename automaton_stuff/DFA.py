@@ -4,21 +4,10 @@ from .automaton import Automaton
 class DFA(Automaton):
 
     def __init__(self, auto=None):
-        super().__init__()
+        super().__init__(auto)
         self._DFA_delta_table = None
-        if auto is not None:
-            if not isinstance(auto, Automaton):
-                return TypeError('instance of Automaton class expected')
-            if not auto.is_DFA():
-                return TypeError('passed automaton is not a DFA')
-            for state in auto.list_states():
-                self.create_state(state)
-            for source_state, target_state, sym in auto.list_transitions():
-                self.add_transition(source_state, target_state, sym)
-            if auto.is_initial_state_defined():
-                self.set_initial_state(auto.get_initial_state())
-            if auto.are_terminal_states_defined():
-                self.set_terminal_states(auto.get_terminal_states())
+        if auto is not None and not auto.is_DFA():
+            raise TypeError('passed automaton does not qualify as DFA')
 
     def _build_DFA_transition_table(self):
         if not self.is_DFA():

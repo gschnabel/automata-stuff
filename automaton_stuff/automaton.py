@@ -3,12 +3,23 @@ import copy
 
 class Automaton():
 
-    def __init__(self):
+    def __init__(self, auto=None):
         self.incoming = dict()
         self.outgoing = dict()
         self.terminal_states = set()
         self.initial_state = None
         self.state_count = 0
+        if auto is not None:
+            if not isinstance(auto, Automaton):
+                return TypeError('instance of Automaton class expected')
+            for state in auto.list_states():
+                self.create_state(state)
+            for source_state, target_state, sym in auto.list_transitions():
+                self.add_transition(source_state, target_state, sym)
+            if auto.is_initial_state_defined():
+                self.set_initial_state(auto.get_initial_state())
+            if auto.are_terminal_states_defined():
+                self.set_terminal_states(auto.get_terminal_states())
 
     def copy(self):
         return copy.deepcopy(self)

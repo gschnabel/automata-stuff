@@ -1,14 +1,15 @@
 import re
 import matplotlib.pyplot as plt
 import networkx as nx
-from automaton_stuff import Automaton
+from automaton_stuff import Automaton, NFA, DFA
 from automaton_stuff.algos import (
     create_NFA_from_rex,
     convert_NFA_to_NFA_without_eps,
     convert_NFA_without_eps_to_DFA,
-    convert_DFA_to_minimal_DFA
+    convert_DFA_to_minimal_DFA,
+    convert_NFA_to_DFA
 )
-from regex_utils import expand_plus, locate_union_symb
+from automaton_stuff.regex_utils import expand_plus, locate_union_symb
 
 # basic checks of automaton
 auto = Automaton()
@@ -24,6 +25,8 @@ auto = create_NFA_from_rex(r'(a\+b|ab|a+)+')
 clone_auto = convert_NFA_to_NFA_without_eps(auto)
 clone_auto = convert_NFA_without_eps_to_DFA(clone_auto)
 clone_auto = convert_DFA_to_minimal_DFA(clone_auto)
+
+clone_auto = convert_NFA_to_DFA(auto)
 
 
 plot_auto = clone_auto
