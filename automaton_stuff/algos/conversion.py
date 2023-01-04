@@ -1,6 +1,6 @@
 from ..automaton import Automaton
 from ..DFA import DFA
-from ..regex_utils import locate_union_symb
+from ..utils.regex_utils import locate_union_symb
 
 
 def _duplicate_automaton_part(
@@ -256,4 +256,10 @@ def convert_NFA_to_DFA(automaton):
     auto = convert_NFA_to_NFA_without_eps(automaton)
     auto = convert_NFA_without_eps_to_DFA(auto)
     auto = convert_DFA_to_minimal_DFA(auto)
+    return auto
+
+
+def create_DFA_from_rex(rex):
+    auto = create_NFA_from_rex(rex)
+    auto = convert_NFA_to_DFA(auto)
     return auto
