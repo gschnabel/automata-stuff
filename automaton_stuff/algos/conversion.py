@@ -77,16 +77,25 @@ def _deal_with_union_rex(automaton, rex, pos, cur_state):
 def _deal_with_bracketed_rex(automaton, rex, pos, cur_state):
     if rex[pos] != '(':
         return pos, cur_state
-    else:
-        temp_state = automaton.create_state()
-        automaton.add_transition(cur_state, temp_state, 'eps')
-        pos, terminal_state = _create_NFA_from_rex(
-            automaton, rex, pos+1, temp_state
-        )
-        if len(rex) == pos or rex[pos] != ')':
-            raise IndexError('missing closing bracket')
-        pos += 1
-        return pos, terminal_state
+    temp_state = automaton.create_state()
+    automaton.add_transition(cur_state, temp_state, 'eps')
+    pos, terminal_state = _create_NFA_from_rex(
+        automaton, rex, pos+1, temp_state
+    )
+    if len(rex) == pos or rex[pos] != ')':
+        raise IndexError('missing closing bracket')
+    pos += 1
+    return pos, terminal_state
+
+
+def _deal_with_dot(automaton, rex, pos, cur_state):
+    if rex[pos] != '.':
+        return pos, cur_state
+    terminal_state = automaton.create_state()
+    symbols = automaton.list_symbols(include_eps=False)
+    automaton.add_transition(cur_state, terminal_state, symbols)
+    pos += 1
+    return pos, terminal_state
 
 
 def _deal_with_symbol(automaton, rex, pos, cur_state):
@@ -104,6 +113,7 @@ def _create_NFA_from_rex(automaton, rex, pos=0, cur_state=None):
     specialised_dealers = tuple((
         _deal_with_union_rex,
         _deal_with_bracketed_rex,
+        _deal_with_dot,
         _deal_with_symbol
     ))
     while pos < len(rex) and rex[pos] != ')':

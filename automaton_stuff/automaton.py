@@ -94,15 +94,24 @@ class Automaton():
     def add_symbol(self, symbol):
         self.alphabet.add(symbol)
 
-    def list_symbols(self, only_used=False):
+    def list_symbols(self, only_used=False, include_eps=True):
         if not only_used:
-            return self.alphabet.copy()
+            ret = self.alphabet.copy()
+            if not include_eps:
+                ret.remove('eps')
+            return ret
         else:
             all_transitions = self.list_transitions()
-            used_symbols = set()
+            ret = set()
             for t in all_transitions:
-                used_symbols.add(t[2])
-            return used_symbols
+                ret.add(t[2])
+        if not include_eps:
+            if 'eps' in ret:
+                ret.remove('eps')
+        return ret
+
+    def get_eps_symbol(self):
+        return 'eps'
 
     def list_states(self):
         return set(self.outgoing)
@@ -205,7 +214,7 @@ class Automaton():
         return len(self.terminal_states) > 0
 
     def contains_eps_transitions(self):
-        symbols = self.list_symbols(only_used=True)
+        symbols = self.list_symbols(only_used=True, include_eps=True)
         return 'eps' in symbols
 
     def is_DFA(self):

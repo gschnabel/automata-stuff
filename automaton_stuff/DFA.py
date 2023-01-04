@@ -22,6 +22,8 @@ class DFA(Automaton):
     def determine_target_state(self, state, symbol):
         if self._DFA_delta_table is None:
             self._build_DFA_transition_table()
+        if state not in self._DFA_delta_table:
+            return None
         return self._DFA_delta_table[state].get(symbol, None)
 
     def is_valid_input(self, string):
