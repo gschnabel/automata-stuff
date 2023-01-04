@@ -168,3 +168,9 @@ class Automaton():
 
     def is_initial_state(self, state):
         return state == self.initial_state
+
+    def is_initial_state_defined(self):
+        return self.initial_state is not None
+
+    def are_terminal_states_defined(self):
+        return len(self.terminal_states) > 0
