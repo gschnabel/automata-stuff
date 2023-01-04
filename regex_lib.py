@@ -4,11 +4,11 @@ import networkx as nx
 from automaton import Automaton
 from automaton_algos import (
     create_NFA_from_rex,
-    duplicate_automaton_part,
     convert_NFA_to_NFA_without_eps,
     convert_NFA_without_eps_to_DFA,
     convert_DFA_to_minimal_DFA
 )
+from regex_utils import expand_plus, locate_union_symb
 
 # basic checks of automaton
 auto = Automaton()
@@ -17,26 +17,17 @@ auto.add_transition(1, 3, 'b')
 # auto.add_transition(3, 0, 'x')
 auto.add_transition(0, 1, 'c')
 auto.add_transition(0, 2, 'y')
-duplicate_automaton_part(auto, 0)
 auto.list_transitions()
 
 # basic checking of NFA-delta to DFA
-auto = Automaton()
-create_NFA_from_rex(auto, '(a+aa|(ab|a+))')
+auto = create_NFA_from_rex('(a+b|(ab|a+))+')
 clone_auto = convert_NFA_to_NFA_without_eps(auto)
 clone_auto = convert_NFA_without_eps_to_DFA(clone_auto)
 clone_auto = convert_DFA_to_minimal_DFA(clone_auto)
 clone_auto = convert_DFA_to_minimal_DFA(clone_auto)
 
 
-# basic checking of converting regular expression to NFA
-auto = Automaton()
-create_NFA_from_rex(auto, '(abc|(12)+3)')
-clone_auto = convert_NFA_to_NFA_without_eps(auto)
-
-
 plot_auto = clone_auto
-
 edges = list(plot_auto.list_transitions(symbols_in_dict=True))
 G = nx.DiGraph()
 G.add_edges_from(edges)

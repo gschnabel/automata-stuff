@@ -8,6 +8,8 @@ def locate_union_symb(rex, pos=0):
             bracket_counter -= 1
         elif cursymb == '|' and bracket_counter == 0:
             return pos
+        elif cursymb == '\\':
+            pos += 1
         pos += 1
     return None
 
@@ -23,6 +25,9 @@ def _expand_plus(rex, pos=0):
             currex = '(' + currex + ')'
         elif cursymb == ')':
             return new_rex, pos
+        elif cursymb == '\\':
+            pos += 1
+            currex = cursymb + rex[pos]
         else:
             currex = cursymb
         pos += 1
