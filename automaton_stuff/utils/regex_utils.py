@@ -45,3 +45,20 @@ def _expand_plus(rex, pos=0):
 def expand_plus(rex):
     newrex, _ = _expand_plus(rex)
     return newrex
+
+
+def remove_caret_and_dollar(rex):
+    pos = 0
+    newrex = ''
+    while pos < len(rex):
+        cursymb = rex[pos]
+        if cursymb in ('^', '$'):
+            pass
+        elif cursymb == '\\':
+            pos += 1
+            cursymb = rex[pos]
+            newrex += '\\' + cursymb
+        else:
+            newrex += cursymb
+        pos += 1
+    return newrex
