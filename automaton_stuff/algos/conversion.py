@@ -1,6 +1,9 @@
 from ..automaton import Automaton
 from ..DFA import DFA
-from ..utils.regex_utils import locate_union_symb
+from ..utils.regex_utils import (
+    locate_union_symb,
+    remove_caret_and_dollar
+)
 
 
 def _duplicate_automaton_part(
@@ -95,6 +98,7 @@ def _create_NFA_from_rex(automaton, rex, pos=0, cur_state=None):
 
 
 def create_NFA_from_rex(rex):
+    rex = remove_caret_and_dollar(rex)
     auto = Automaton()
     _create_NFA_from_rex(auto, rex)
     return auto
