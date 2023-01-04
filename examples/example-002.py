@@ -32,7 +32,7 @@ print(type(auto))
 auto = convert_DFA_to_minimal_DFA(auto)
 plot_automaton(auto)
 
-# the same result, the construction of a 
+# the same result, the construction of a
 # minimal DFA can be achieved quicker
 # by using the following function
 auto = create_DFA_from_rex(r'(a\+b|ab|a+)+')
