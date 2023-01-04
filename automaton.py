@@ -10,12 +10,45 @@ class Automaton():
         self.initial_state = None
         self.state_count = 0
 
+    def _build_DFA_transition_table(self):
+        if not self.is_DFA():
+            raise TypeError('cannot build a DFA transition table for an NFA')
+        transitions = self.list_transitions()
+        delta_table = dict()
+        for curstate, outstate, sym in transitions:
+            tmp = delta_table.setdefault(curstate, dict())
+            tmp[sym] = outstate
+        self._DFA_delta_table = delta_table
+
+    def determine_target_state(self, state, symbol):
+        if self._DFA_delta_table is None:
+            self._build_DFA_transition_table()
+        return self._DFA_delta_table[state].get(symbol, None)
+
+    def is_valid_input(self, string):
+        if not self.is_initial_state_defined():
+            raise IndexError('initial state not defined')
+        if not self.are_terminal_states_defined():
+            raise IndexError('terminal states not defined')
+        terminal_states = self.get_terminal_states()
+        curstate = self.get_initial_state()
+        pos = 0
+        while pos < len(string):
+            cursym = string[pos]
+            next_state = self.determine_target_state(curstate, cursym)
+            if next_state is None:
+                return False
+            pos += 1
+            curstate = next_state
+        return curstate in terminal_states
+
     def copy(self):
         return copy.deepcopy(self)
 
     def add_transition(self, source_state, target_state, input_symb):
         if type(input_symb) == set and len(input_symb) == 0:
             return
+        self._DFA_delta_table = None
         source_state = self.create_state(source_state)
         target_state = self.create_state(target_state)
         outdict = self.outgoing.setdefault(source_state, dict())
@@ -32,6 +65,7 @@ class Automaton():
     def remove_transition(
         self, source_state, target_state, input_symb=None
     ):
+        self._DFA_delta_table = None
         if input_symb is None:
             del self.outgoing[source_state][target_state]
             del self.incoming[target_state][source_state]
