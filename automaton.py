@@ -174,3 +174,20 @@ class Automaton():
 
     def are_terminal_states_defined(self):
         return len(self.terminal_states) > 0
+
+    def contains_eps_transitions(self):
+        symbols = self.list_symbols()
+        return 'eps' in symbols
+
+    def is_DFA(self):
+        if self.contains_eps_transitions():
+            return False
+        transitions = self.list_transitions()
+        symdict = dict()
+        for curstate, outstate, sym in transitions:
+            key = (curstate, sym)
+            symdict.setdefault(key, 0)
+            symdict[key] += 1
+            if symdict[key] > 1:
+                return False
+        return True
