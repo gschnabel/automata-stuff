@@ -1,11 +1,6 @@
-from automaton_stuff import Automaton, DFA, NFA
-from automaton_stuff.algos import (
-    create_DFA_from_rex,
-    create_NFA_from_rex,
-    convert_NFA_to_NFA_without_eps
-)
-from automaton_stuff.utils.regex_utils import expand_plus, locate_union_symb
+from automaton_stuff import Automaton
 from automaton_stuff.utils.visualization import plot_automaton
+
 
 # create an automaton manually
 auto = Automaton()
@@ -26,16 +21,11 @@ print(auto.list_transitions())
 
 plot_automaton(auto)
 
+print('Removoing state 0')
 auto.remove_state(0)
+print('Removing transitions from 1 to 3 for symbol b')
 auto.remove_transition(1, 3, 'b')
-
-
-# basic checking of NFA-delta to DFA
-auto = create_NFA_from_rex(r'(a\+b|ab|a+)+')
-auto = convert_NFA_to_NFA_without_eps(auto)
-
-
-auto = create_DFA_from_rex(r'(a\+b|ab|a+)+')
-plot_automaton(auto)
-
-auto.is_valid_input('a+caaaaab')
+print('Remaining states: ')
+print(auto.list_states())
+print('Remaining transitions: ')
+print(auto.list_transitions())
