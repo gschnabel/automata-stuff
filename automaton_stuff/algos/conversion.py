@@ -66,14 +66,6 @@ def _create_NFA_from_rex(automaton, rex, pos=0, cur_state=None):
             )
             if len(rex) == pos or rex[pos] != ')':
                 raise IndexError('missing closing bracket')
-        # treat character classes (we keep their string representation as they
-        # are and later employ the functionality of the re package for matching
-        elif cursymb == '[':
-            pos2 = rex.index(']', pos)
-            subrex = rex[pos:pos2+1]
-            terminal_state = automaton.create_state()
-            automaton.add_transition(cur_state, terminal_state, subrex)
-            pos = pos2
         # treat regular symbol
         else:
             if cursymb == '\\':
