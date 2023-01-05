@@ -301,14 +301,15 @@ def convert_DFA_to_minimal_DFA(original_automaton):
     return DFA(new_auto)
 
 
-def convert_NFA_to_DFA(automaton):
+def convert_NFA_to_DFA(automaton, minimize=True):
     auto = convert_NFA_to_NFA_without_eps(automaton)
     auto = convert_NFA_without_eps_to_DFA(auto)
-    auto = convert_DFA_to_minimal_DFA(auto)
+    if minimize:
+        auto = convert_DFA_to_minimal_DFA(auto)
     return auto
 
 
-def create_DFA_from_rex(rex):
+def create_DFA_from_rex(rex, minimize=True):
     auto = create_NFA_from_rex(rex)
-    auto = convert_NFA_to_DFA(auto)
+    auto = convert_NFA_to_DFA(auto, minimize)
     return auto
