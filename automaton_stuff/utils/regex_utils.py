@@ -1,3 +1,19 @@
+def substitute_dot_by_union(rex, alphabet):
+    pos = 0
+    newrex = ''
+    while pos < len(rex):
+        cursymb = rex[pos]
+        if cursymb == '.':
+            cursymb = '(' + '|'.join(alphabet) + ')'
+        elif cursymb == '\\':
+            newrex += cursymb
+            pos += 1
+            cursymb = rex[pos]
+        newrex += cursymb
+        pos += 1
+    return newrex
+
+
 def locate_union_symb(rex, pos=0):
     bracket_counter = 0
     while pos < len(rex) and bracket_counter >= 0:
