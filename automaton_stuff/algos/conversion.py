@@ -5,32 +5,10 @@ from ..utils.regex_utils import (
     remove_caret_and_dollar,
     expand_plus
 )
-
-
-def _duplicate_automaton_part(
-        automaton, start_state, clone_state=None, state_map=None
-):
-    state_map = state_map if state_map is not None else dict()
-    clone_state = automaton.create_state() if clone_state is None else clone_state
-    state_map[start_state] = clone_state
-    terminal_states = list()
-    out_transitions = automaton.list_transitions(source_states=(start_state,))
-    for _, outstate, inpsym in out_transitions:
-        if outstate in state_map:
-            new_state = state_map[outstate]
-        else:
-            new_state = automaton.create_state()
-        automaton.add_transition(clone_state, new_state, inpsym)
-        if outstate not in state_map:
-            _, new_terminal_states, _ = _duplicate_automaton_part(
-                automaton, outstate, new_state, state_map
-            )
-            terminal_states.append(new_terminal_states)
-    if len(automaton.outgoing[start_state]) == 0:
-        terminal_states = set((clone_state,))
-    else:
-        terminal_states = set((x for y in terminal_states for x in y))
-    return clone_state, terminal_states, state_map
+from .auxiliary import (
+    duplicate_automaton_part,
+    organize_transitions_by_symbols
+)
 
 
 def _deal_with_rex_modifiers(automaton, rex, pos, cur_state, terminal_state):
@@ -39,7 +17,7 @@ def _deal_with_rex_modifiers(automaton, rex, pos, cur_state, terminal_state):
     # perform an automaton duplication for `+`
     if rex_symb == '+':
         clone_state, new_terminal_states, _ = \
-            _duplicate_automaton_part(automaton, cur_state)
+            duplicate_automaton_part(automaton, cur_state)
         automaton.add_transition(terminal_state, clone_state, 'eps')
         cur_state = clone_state
         if len(new_terminal_states) != 1:
@@ -194,15 +172,6 @@ def convert_NFA_to_NFA_without_eps(original_automaton):
     return clone_auto
 
 
-def _organize_transitions_by_symbols(transitions):
-    sym_dict = dict()
-    for t in transitions:
-        cursym = t[2]
-        curtransitions = sym_dict.setdefault(cursym, set())
-        curtransitions.add(t)
-    return sym_dict
-
-
 def convert_NFA_without_eps_to_DFA(original_automaton):
     auto = original_automaton
     new_auto = Automaton()
@@ -219,7 +188,7 @@ def convert_NFA_without_eps_to_DFA(original_automaton):
         curstate = state_map[cur_state_tuple]
         visited.add(cur_state_tuple)
         transitions = auto.list_transitions(source_states=set(cur_state_tuple))
-        ts_by_sym = _organize_transitions_by_symbols(transitions)
+        ts_by_sym = organize_transitions_by_symbols(transitions)
         for sym, ts in ts_by_sym.items():
             new_state_tuple = tuple(sorted(set(t[1] for t in ts)))
             if new_state_tuple not in state_map:
