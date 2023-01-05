@@ -2,7 +2,8 @@ from ..automaton import Automaton
 from ..DFA import DFA
 from ..utils.regex_utils import (
     locate_union_symb,
-    remove_caret_and_dollar
+    remove_caret_and_dollar,
+    expand_plus
 )
 
 
@@ -91,9 +92,14 @@ def _deal_with_bracketed_rex(automaton, rex, pos, cur_state):
 def _deal_with_dot(automaton, rex, pos, cur_state):
     if rex[pos] != '.':
         return pos, cur_state
-    terminal_state = automaton.create_state()
+    temp_state = automaton.create_state()
+    automaton.add_transition(cur_state, temp_state, 'eps')
+    temp_state2 = automaton.create_state()
     symbols = automaton.list_symbols(include_eps=False)
-    automaton.add_transition(cur_state, terminal_state, symbols)
+    assert 'eps' not in symbols
+    automaton.add_transition(temp_state, temp_state2, symbols)
+    terminal_state = automaton.create_state()
+    automaton.add_transition(temp_state2, terminal_state, 'eps')
     pos += 1
     return pos, terminal_state
 
@@ -131,8 +137,9 @@ def _create_NFA_from_rex(automaton, rex, pos=0, cur_state=None):
 
 
 def create_NFA_from_rex(rex):
-    rex = remove_caret_and_dollar(rex)
     auto = Automaton()
+    rex = remove_caret_and_dollar(rex)
+    rex = expand_plus(rex)
     initial_state = auto.create_state()
     auto.set_initial_state(initial_state)
     pos, terminal_state = _create_NFA_from_rex(auto, rex, 0, initial_state)
@@ -164,29 +171,36 @@ def convert_NFA_to_NFA_without_eps(original_automaton):
     auto = original_automaton
     clone_auto = Automaton()
     state_map = dict()
-    # create new states for each nfa state
-    states = auto.list_states()
-    for s in states:
-        new_state = clone_auto.create_state()
-        state_map[s] = new_state
     # set initial state of new nfa
     original_initial_state = auto.get_initial_state()
-    new_initial_state = state_map[original_initial_state]
+    new_initial_state = clone_auto.create_state()
+    state_map[original_initial_state] = new_initial_state
     clone_auto.set_initial_state(new_initial_state)
+    untreated_states = set((original_initial_state,))
     # add transitions
-    for state in states:
+    while len(untreated_states) > 0:
+        state = untreated_states.pop()
+        new_state = state_map[state]
         curtransitions, is_terminal_state = _determine_transitions(auto, state)
-        new_source_state = state_map[state]
         if is_terminal_state:
-            clone_auto.add_terminal_state(new_source_state)
+            clone_auto.add_terminal_state(new_state)
         for _, target_state, sym in curtransitions:
+            if target_state not in state_map:
+                new_target_state = clone_auto.create_state()
+                state_map[target_state] = new_target_state
+                untreated_states.add(target_state)
             new_target_state = state_map[target_state]
-            clone_auto.add_transition(new_source_state, new_target_state, sym)
-    # remove unreachable states
-    unreachable = clone_auto.determine_unreachable_states()
-    for s in unreachable:
-        clone_auto.remove_state(s)
+            clone_auto.add_transition(new_state, new_target_state, sym)
     return clone_auto
+
+
+def _organize_transitions_by_symbols(transitions):
+    sym_dict = dict()
+    for t in transitions:
+        cursym = t[2]
+        curtransitions = sym_dict.setdefault(cursym, set())
+        curtransitions.add(t)
+    return sym_dict
 
 
 def convert_NFA_without_eps_to_DFA(original_automaton):
@@ -195,36 +209,31 @@ def convert_NFA_without_eps_to_DFA(original_automaton):
     initial_state = auto.get_initial_state()
     new_initial_state = new_auto.create_state()
     new_auto.set_initial_state(new_initial_state)
-    state_sets = dict()
-    state_sets[new_initial_state] = set((initial_state,))
-    visited = dict()
-    untreated_states = set((new_initial_state,))
+    state_map = dict()
+    state_map[(initial_state,)] = new_initial_state
+    untreated_states = set()
+    untreated_states.add((initial_state,))
+    visited = set()
     while len(untreated_states) > 0:
-        curstate = untreated_states.pop()
-        orig_source_states = state_sets[curstate]
-        visited[tuple(sorted(orig_source_states))] = curstate
-        transitions = auto.list_transitions(source_states=orig_source_states)
-        sym_dict = dict()
-        for t in transitions:
-            cursym = t[2]
-            curtransitions = sym_dict.setdefault(cursym, set())
-            curtransitions.add(t)
-        for sym, ts in sym_dict.items():
-            new_state_set = set(t[1] for t in ts)
-            new_state_tuple = tuple(sorted(new_state_set))
-            if new_state_tuple in visited:
-                target_state = visited[new_state_tuple]
-                new_auto.add_transition(curstate, target_state, sym)
-            else:
+        cur_state_tuple = untreated_states.pop()
+        curstate = state_map[cur_state_tuple]
+        visited.add(cur_state_tuple)
+        transitions = auto.list_transitions(source_states=set(cur_state_tuple))
+        ts_by_sym = _organize_transitions_by_symbols(transitions)
+        for sym, ts in ts_by_sym.items():
+            new_state_tuple = tuple(sorted(set(t[1] for t in ts)))
+            if new_state_tuple not in state_map:
                 new_state = new_auto.create_state()
-                untreated_states.add(new_state)
+                state_map[new_state_tuple] = new_state
+                if new_state_tuple not in visited:
+                    untreated_states.add(new_state_tuple)
                 is_terminal_state = any(
                     (auto.is_terminal_state(tt[1]) for tt in ts)
                 )
                 if is_terminal_state:
                     new_auto.add_terminal_state(new_state)
-                state_sets[new_state] = new_state_set
-                new_auto.add_transition(curstate, new_state, sym)
+            new_state = state_map[new_state_tuple]
+            new_auto.add_transition(curstate, new_state, sym)
     return DFA(new_auto)
 
 
