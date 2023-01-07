@@ -24,7 +24,7 @@ It may be easiest to download this repository and make the path available
 via the `PYTHONPATH` environment variable. Alternatively, the package
 can be installed via pip by
 ```
-pip install git+https://github.com/gschnabel/automaton_stuff.py
+pip install git+https://github.com/gschnabel/automata-stuff.git
 ```
 or if the repository folder has already been downloaded by
 ```
