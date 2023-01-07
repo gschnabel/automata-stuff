@@ -1,4 +1,4 @@
-# Automaton stuff
+# Automata stuff
 
 This Python packages contains a class `Automaton`, which implements methods
 for constructing and manipulating a [finite state automaton][finite-state-machine].
@@ -14,7 +14,7 @@ it can be checked whether an automaton is a subautomaton of another one.
 Due to the relationship between automata and regular expressions, it can
 therefore be checked whether a given regular expression matches
 a subset of the strings matched by another regular expression.
-Please note that only basic features of regulare expressions are implemented,
+Please note that only basic features of regular expressions are implemented,
 which are `.`, `*`, `+`, `?` and brackets but advanced features such as
 character classes and named capture groups are not implemented.
 
@@ -41,7 +41,7 @@ some of the available functions.
 ## License
 
 This package is provided under [The Unlicense][the-unlicense] license,
-which essentially means that is released into the public domain.
+which essentially means that the code is released into the public domain.
 Consult the accompanying `LICENSE` file for the full details of this license. 
 
 [finite-state-machine]: https://en.wikipedia.org/wiki/Finite-state_machine 
