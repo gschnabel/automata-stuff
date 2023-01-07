@@ -15,7 +15,7 @@ Due to the relationship between automata and regular expressions, it can
 therefore be checked whether a given regular expression matches
 a subset of the strings matched by another regular expression.
 Please note that only basic features of regular expressions are implemented,
-which are `.`, `*`, `+`, `?` and brackets but advanced features such as
+which are `.`, `*`, `+`, `?`, `|` and brackets but advanced features such as
 character classes and named capture groups are not implemented.
 
 ## Installation
