@@ -1,5 +1,5 @@
-from automaton_stuff.algos import create_DFA_from_rex
-from automaton_stuff.algos.checking import is_subautomaton
+from automata_stuff.algos import create_DFA_from_rex
+from automata_stuff.algos.checking import is_subautomaton
 
 
 rex1 = 'abc_(uv|xy)+_def'

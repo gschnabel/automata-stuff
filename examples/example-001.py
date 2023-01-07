@@ -1,5 +1,5 @@
-from automaton_stuff import Automaton
-from automaton_stuff.utils.visualization import plot_automaton
+from automata_stuff import Automaton
+from automata_stuff.utils.visualization import plot_automaton
 
 
 # create an automaton manually

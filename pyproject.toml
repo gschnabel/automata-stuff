@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "automaton-stuff"
+name = "automata-stuff"
 version = "0.1.0"
 description = "implementation of automata and some related algorithms"
 authors = ["gschnabel <40870991+gschnabel@users.noreply.github.com>"]
 license = "The Unlicense"
 readme = "README.md"
-packages = [{include = "automaton_stuff"}]
+packages = [{include = "automata_stuff"}]
 
 [tool.poetry.dependencies]
 python = ">=3.7"

@@ -1,5 +1,5 @@
-from automaton_stuff.utils.visualization import plot_automaton
-from automaton_stuff.algos import (
+from automata_stuff.utils.visualization import plot_automaton
+from automata_stuff.algos import (
     create_DFA_from_rex,
     create_NFA_from_rex,
     convert_NFA_to_NFA_without_eps,
